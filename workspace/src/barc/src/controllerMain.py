@@ -63,7 +63,7 @@ def main():
     
     # Choose Controller and Number of Laps
 
-    PickController = "LMPC"
+    PickController = "PID"
     NumberOfLaps   = 40
     vt = 1.2
     PathFollowingLaps = 2
@@ -348,7 +348,7 @@ def ControllerInitialization(PickController, NumberOfLaps, dt, vt, map, mode, PI
     if PickController == 'PID':
         ControllerLap0 = PID(vt, PIDnoise, mode) 
     else:
-        file_data = open(homedir+'/barc_data/'+'/ClosedLoopDataPID.obj', 'rb')
+        file_data = open(homedir+'/barc_data'+'/ClosedLoopDataPID.obj', 'rb')
         ClosedLoopDataPID = pickle.load(file_data)
         file_data.close()
         if mode == "simulations":
@@ -365,15 +365,15 @@ def ControllerInitialization(PickController, NumberOfLaps, dt, vt, map, mode, PI
         Controller = PID(vt, PIDnoise, mode)
                                         # PID controller
     elif PickController == "TI_MPC":
-        # file_data = open(homedir+'/barc_data/'+'/ClosedLoopDataPID.obj', 'rb')
-        file_data = open(homedir+'/barc_data/'+'/ClosedLoopDataPIDforLMPC.obj', 'rb')
+        # file_data = open(homedir+'/barc_data'+'/ClosedLoopDataPID.obj', 'rb')
+        file_data = open(homedir+'/barc_data'+'/ClosedLoopDataPIDforLMPC.obj', 'rb')
         ClosedLoopDataPID = pickle.load(file_data)
         file_data.close()     
         Controller = PathFollowingLTI_MPC(A, B, Q, R, N, vt, TI_Qlane)
 
     elif PickController == "TV_MPC":
-        # file_data = open(homedir+'/barc_data/'+'/ClosedLoopDataPIDforLMPC.obj', 'rb')
-        file_data = open(homedir+'/barc_data/'+'/ClosedLoopDataTI_MPC.obj', 'rb')
+        # file_data = open(homedir+'/barc_data'+'/ClosedLoopDataPIDforLMPC.obj', 'rb')
+        file_data = open(homedir+'/barc_data'+'/ClosedLoopDataTI_MPC.obj', 'rb')
         ClosedLoopDataPID = pickle.load(file_data)
         file_data.close()
         Q = 1*np.diag([500.0, 1.0, 10.0, 1.0, 0.0, 10 * 2 * 5 * 50.0]) # vx, vy, wz, epsi, s, ey
@@ -384,9 +384,9 @@ def ControllerInitialization(PickController, NumberOfLaps, dt, vt, map, mode, PI
                                                        ClosedLoopDataPID.u[0:ClosedLoopDataPID.SimTime, :], dt, map, "OSQP")
     elif PickController == "LMPC":
         if mode == "simulations":
-            file_data = open(homedir+'/barc_data/'+'/ClosedLoopDataTI_MPC.obj', 'rb')
+            file_data = open(homedir+'/barc_data'+'/ClosedLoopDataTI_MPC.obj', 'rb')
         else:
-            file_data = open(homedir+'/barc_data/'+'/ClosedLoopDataPIDforLMPC.obj', 'rb')
+            file_data = open(homedir+'/barc_data'+'/ClosedLoopDataPIDforLMPC.obj', 'rb')
         ClosedLoopDataTI_MPC = pickle.load(file_data)
         file_data.close()
         Laps       = NumberOfLaps+2   # Total LMPC laps
@@ -438,7 +438,7 @@ def ControllerInitialization(PickController, NumberOfLaps, dt, vt, map, mode, PI
         print "LMPC initialized!"
     
     elif PickController == "ZeroStep":
-        file_data = open(homedir+'/barc_data/'+'/ClosedLoopDataLMPC.obj', 'rb')
+        file_data = open(homedir+'/barc_data'+'/ClosedLoopDataLMPC.obj', 'rb')
         ClosedLoopData = pickle.load(file_data)
         LMPController = pickle.load(file_data)
         LMPCOpenLoopData = pickle.load(file_data) 
