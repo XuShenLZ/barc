@@ -25,7 +25,8 @@ class EstimatorData(object):
     """Data from estimator"""
     def __init__(self):
         """Subscriber to estimator"""
-        rospy.Subscriber("pos_info", pos_info, self.estimator_callback)
+        rospy.Subscriber("simState", pos_info, self.estimator_callback)
+        # rospy.Subscriber("pos_info", pos_info, self.estimator_callback)
         self.CurrentState = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.CurrentAppliedSteeringInput = 0.0
     

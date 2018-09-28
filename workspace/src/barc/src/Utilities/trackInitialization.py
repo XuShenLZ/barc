@@ -90,6 +90,19 @@ class Map():
                              # Note s = 1 * np.pi / 2 and r = -1 ---> Angle spanned = np.pi / 2
                              [4.5, 4.5 / np.pi]])
 
+        elif selectedTrack == "vrep-box":
+            self.halfWidth = 10
+            self.slack = 0.45
+            spec = np.array([[10, 0],
+                             [0.5*26*np.pi, 26],
+                             [20, 0],
+                             [0.5*26*np.pi, 26],
+                             [20, 0],
+                             [0.5*26*np.pi, 26],
+                             [20, 0],
+                             [0.5*26*np.pi, 26],
+                             [10, 0]])
+
         # Now given the above segments we compute the (x, y) points of the track and the angle of the tangent vector (psi) at
         # these points. For each segment we compute the (x, y, psi) coordinate at the last point of the segment. Furthermore,
         # we compute also the cumulative s at the starting point of the segment at signed curvature
