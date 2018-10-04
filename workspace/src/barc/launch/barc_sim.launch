@@ -11,7 +11,8 @@
     <!-- <param name="trackShape" type="str" value="L_shape" /> -->
     <!-- <param name="trackShape" type="str" value="3110_big" /> -->
     <!-- <param name="trackShape" type="str" value="oval" /> -->
-    <param name="trackShape" type="str" value="vrep-box" />
+    <!-- <param name="trackShape" type="str" value="vrep-box" /> -->
+    <param name="trackShape" type="str" value="vrep-largelap" />
 
    
     <!-- VISUALIZATION -->

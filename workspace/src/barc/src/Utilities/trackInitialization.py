@@ -103,6 +103,18 @@ class Map():
                              [0.5*26*np.pi, 26],
                              [10, 0]])
 
+        elif selectedTrack == "vrep-largelap":
+            self.halfWidth = 6
+            self.slack = 0.45
+            spec = np.array([[67.9, 0],
+                             [0.25*79*np.pi, 79],
+                             [0.25*79*np.pi, -79],
+                             [79*np.pi, 79],
+                             [116.3, 0],
+                             [0.5*79*np.pi, 79],
+                             [105.9, 0],
+                             [0.5*19*np.pi, 19]])
+
         # Now given the above segments we compute the (x, y) points of the track and the angle of the tangent vector (psi) at
         # these points. For each segment we compute the (x, y, psi) coordinate at the last point of the segment. Furthermore,
         # we compute also the cumulative s at the starting point of the segment at signed curvature
