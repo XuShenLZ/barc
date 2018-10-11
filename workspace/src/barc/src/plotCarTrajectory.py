@@ -155,8 +155,8 @@ class EstimationAndMesuredData():
 
         if plotGPS == True:
             rospy.Subscriber("hedge_pos", hedge_pos, self.gps_callback)
-        # rospy.Subscriber("pos_info", pos_info, self.pos_info_callback)
-        rospy.Subscriber("simState", pos_info, self.pos_info_callback)
+        rospy.Subscriber("pos_info", pos_info, self.pos_info_callback)
+        # rospy.Subscriber("simState", pos_info, self.pos_info_callback)
         rospy.Subscriber("OL_predictions", prediction, self.prediction_callback)
         rospy.Subscriber('SS', SafeSetGlob, self.SS_callback)
 

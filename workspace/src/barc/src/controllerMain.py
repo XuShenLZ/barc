@@ -65,8 +65,8 @@ def main():
 
     PickController = "PID"
     NumberOfLaps   = 40
-    # vt = 1.2
-    vt = 10
+    vt = 1.2
+    # vt = 5
     PathFollowingLaps = 2
     
     if mode == "simulations":
@@ -482,10 +482,9 @@ class PID:
         vt = self.vt
         # x= [v_x, v_y, psi_dot, e_psi, s, ey]
 
-        # for vt = 10, vrep-largelap
         if self.mode == "simulations":
-            Steering = - 0.5 * 2 * x0[5] - 3 * 0.5 * x0[3] - 0.0002 * self.integral[0]
-            Accelera = 0.5 * 1 * (vt - x0[0]) + 0.001 * self.integral[1]
+            Steering = - 0.5 * 2.0 * x0[5] - 2 * 0.5 * x0[3] - 0.001 * self.integral[0]
+            Accelera = 0.5 * 1.5 * (vt - x0[0]) + 0.1 * self.integral[1]
         else:
             Steering = - 0.5 * x0[5] - x0[3] - 0.1 * self.integral[0]
             Accelera = 1.5 * (vt - x0[0]) + 0.1 * self.integral[1]
@@ -493,8 +492,21 @@ class PID:
         self.integral[0] = self.integral[0] +  0.1 * x0[5] + 0.1 * x0[3]
         self.integral[1] = self.integral[1] +  (vt - x0[0])
 
-        self.uPred[0, 0] = self.truncate(Steering, 0.35) + self.truncate( np.random.randn() * 0.1 * self.noise[0], 0.3)
+        self.uPred[0, 0] = self.truncate(Steering, 0.3) + self.truncate( np.random.randn() * 0.25 * self.noise[0], 0.3)
         self.uPred[0, 1] = self.truncate(Accelera, 2.0) + self.truncate( np.random.randn() * 0.1 * self.noise[0], 0.3)
+        # for vt = 10, vrep-largelap
+        # if self.mode == "simulations":
+        #     Steering = - 0.5 * 2 * x0[5] - 3 * 0.5 * x0[3] - 0.0002 * self.integral[0]
+        #     Accelera = 0.5 * 1 * (vt - x0[0]) + 0.001 * self.integral[1]
+        # else:
+        #     Steering = - 0.5 * x0[5] - x0[3] - 0.1 * self.integral[0]
+        #     Accelera = 1.5 * (vt - x0[0]) + 0.1 * self.integral[1]
+
+        # self.integral[0] = self.integral[0] +  0.1 * x0[5] + 0.1 * x0[3]
+        # self.integral[1] = self.integral[1] +  (vt - x0[0])
+
+        # self.uPred[0, 0] = self.truncate(Steering, 0.35) + self.truncate( np.random.randn() * 0.1 * self.noise[0], 0.3)
+        # self.uPred[0, 1] = self.truncate(Accelera, 2.0) + self.truncate( np.random.randn() * 0.1 * self.noise[0], 0.3)
 
 
         # for vt = 10, vrep-box
@@ -512,8 +524,12 @@ class PID:
         # self.uPred[0, 1] = self.truncate(Accelera, 2.0) + self.truncate( np.random.randn() * 0.1 * self.noise[0], 0.3)
 
         # for vt = 5, vrep-box
-        # Steering = - 0.5 * 5.0 * x0[5] - 5 * 0.5 * x0[3] - 0.001 * self.integral[0]
-        # Accelera = 0.5 * 3 * (vt - x0[0]) + 0.05 * self.integral[1]
+        # if self.mode == "simulations":
+        #     Steering = - 0.5 * 5.0 * x0[5] - 5 * 0.5 * x0[3] - 0.001 * self.integral[0]
+        #     Accelera = 0.5 * 3 * (vt - x0[0]) + 0.05 * self.integral[1]
+        # else:
+        #     Steering = - 0.5 * x0[5] - x0[3] - 0.1 * self.integral[0]
+        #     Accelera = 1.5 * (vt - x0[0]) + 0.1 * self.integral[1]
 
         # self.integral[0] = self.integral[0] +  0.1 * x0[5] + 0.1 * x0[3]
         # self.integral[1] = self.integral[1] +  (vt - x0[0])
