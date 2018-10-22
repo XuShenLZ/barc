@@ -1,0 +1,4 @@
+[submodule "workspace/src/vrep_ros_interface"]
+	path = workspace/src/vrep_ros_interface
+	url = https://github.com/CoppeliaRobotics/v_repExtRosInterface
+	branch = master
