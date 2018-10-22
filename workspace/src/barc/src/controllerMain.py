@@ -63,7 +63,7 @@ def main():
     
     # Choose Controller and Number of Laps
 
-    PickController = "PID"
+    PickController = "TI_MPC"
     NumberOfLaps   = 40
     vt = 1.2
     # vt = 5
