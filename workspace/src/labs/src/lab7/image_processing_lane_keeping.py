@@ -19,6 +19,9 @@ from cv_bridge import CvBridge
 # state estimation node
 class image_processing_node():
     def __init__(self):
+        # Create the CVBridge
+        self.bridge = CvBridge()
+
         # Define camera settings
         # put bright, contrast, saturation, hue into image_processing_param.yaml file
         self.vid = cv2.VideoCapture(rospy.get_param("/videoDevicePath")) # Sets the port /dev/video6 as the video device
@@ -70,8 +73,6 @@ class image_processing_node():
         self.state_constraints = barc_state()
         self.reference_trajectory = barc_state()
 
-        self.bridge = CvBridge()
-
         # Initialize publishers and subscribers
         self.moving_pub                 = rospy.Publisher("moving", Moving, queue_size=1)
         self.hold_previous_turn_pub     = rospy.Publisher("hold_previous_turn", Bool, queue_size=1)
@@ -81,6 +82,9 @@ class image_processing_node():
         self.uOpt_pub                   = rospy.Publisher("uOpt", Input, queue_size=1)
         self.optimal_state_sub          = rospy.Subscriber("optimal_state_trajectory", barc_state, self.convertDistanceToPixels)
         self.dt_pub                     = rospy.Publisher("dt", Float64, queue_size=1)
+
+        self.image_sub = rospy.Subscriber("/image", Image,self.callback_image,queue_size=1)
+
 
         # The boolean messages passed to these topics are not used, we only want them for the independently threaded callback function.
         self.draw_lines_pub     = rospy.Publisher("draw_lines", Bool, queue_size=1)
@@ -99,90 +103,95 @@ class image_processing_node():
         self.printme = False
         self.statepoints=''
         self.camera_distance_calibrated = False
+        self.cv_image = False
         print("Press Up Arrow to start moving. Press Down Arrow to stop moving.")
         while not rospy.is_shutdown():
             try:
-                self.count = self.count +1 # updates the count
-                self.rel,self.dst = self.vid.read() # gets the current frame from the camera
-
-                # Updates the sample time
-                self.dt = time.time() - self.previousTime 
-                self.previousTime = time.time()
-                if self.flipped_camera:
-                    self.cv_image = cv2.flip(cv2.remap(self.dst,self.mapx,self.mapy,cv2.INTER_LINEAR),-1) #Undistorts the fisheye image to rectangular
+                if isinstance(self.cv_image,bool):
+                    pass
                 else:
-                    self.cv_image = cv2.remap(self.dst,self.mapx,self.mapy,cv2.INTER_LINEAR) #Undistorts the fisheye image to rectangular
-                self.x,self.y,self.width,self.height = self.roi
+                    self.count = self.count +1 # updates the count
+                    #self.rel,self.dst = self.vid.read() # gets the current frame from the camera
 
-                # colorFilter = True makes the edge detection search for a red/white track using HSV. False will use grayscale and search for any edge regardless of color
-                colorFilter =  rospy.get_param("/colorFilter")
-                kernel_size = rospy.get_param("/kernel_size")
-                if colorFilter:
-                    imageToFilter = self.cv_image
-                    imageToFilter[0:280,0:self.width] = 0 #blacks out the top portion of the image (not used)
+                    # Updates the sample time
+                    self.dt = time.time() - self.previousTime 
+                    self.previousTime = time.time()
+                    # if self.flipped_camera:
+                    #     self.cv_image = cv2.flip(cv2.remap(self.dst,self.mapx,self.mapy,cv2.INTER_LINEAR),-1) #Undistorts the fisheye image to rectangular
+                    # else:
+                    #     self.cv_image = cv2.remap(self.dst,self.mapx,self.mapy,cv2.INTER_LINEAR) #Undistorts the fisheye image to rectangular
+                    # self.x,self.y,self.width,self.height = self.roi
 
-                    #self.hsv = cv2.cvtColor(imageToFilter, cv2.COLOR_BGR2HSV) #.004 
+                    # colorFilter = True makes the edge detection search for a red/white track using HSV. False will use grayscale and search for any edge regardless of color
+                    colorFilter =  rospy.get_param("/colorFilter")
+                    kernel_size = rospy.get_param("/kernel_size")
+                    if colorFilter:
+                        imageToFilter = self.cv_image
+                        # imageToFilter[0:280,0:self.width] = 0 #blacks out the top portion of the image (not used)
 
-                    # define range of color thresholds in (B,G,R)
-                    lower_red = np.flipud(np.array(rospy.get_param("/lower_red")))
-                    upper_red = np.flipud(np.array(rospy.get_param("/upper_red")))
+                        #self.hsv = cv2.cvtColor(imageToFilter, cv2.COLOR_BGR2HSV) #.004 
 
-                    lower_white = np.flipud(np.array(rospy.get_param("/lower_white")))
-                    upper_white = np.flipud(np.array(rospy.get_param("/upper_white")))
+                        # define range of color thresholds in (B,G,R)
+                        lower_blue = np.flipud(np.array(rospy.get_param("/lower_blue")))
+                        upper_blue = np.flipud(np.array(rospy.get_param("/upper_blue")))
 
-                    # Threshold the image to only have the red/white track appear
-                    self.reds = cv2.inRange(imageToFilter, lower_red, upper_red)
-                    self.whites = cv2.inRange(imageToFilter, lower_white, upper_white) 
+                        lower_black = np.flipud(np.array(rospy.get_param("/lower_black")))
+                        upper_black = np.flipud(np.array(rospy.get_param("/upper_black")))
+
+                        # Threshold the image to only have the red/white track appear
+                        self.reds = cv2.inRange(imageToFilter, lower_blue, upper_blue)
+                        self.whites = cv2.inRange(imageToFilter, lower_black, upper_black) 
 
 
-                    self.edges = cv2.bitwise_or(self.reds,self.whites) # combines the red filter and white filter images
-                    self.edges = cv2.GaussianBlur(self.edges,(kernel_size,kernel_size),0) # blurs the image
-                    retval, self.edges = cv2.threshold(self.edges,127,255,cv2.THRESH_BINARY) # converts the blurred greyscale to binary to filter once more
+                        self.edges = cv2.bitwise_or(self.reds,self.whites) # combines the red filter and white filter images
+                        self.edges = cv2.bitwise_not(self.edges)
+                        self.edges = cv2.GaussianBlur(self.edges,(kernel_size,kernel_size),0) # blurs the image
+                        retval, self.edges = cv2.threshold(self.edges,127,255,cv2.THRESH_BINARY) # converts the blurred greyscale to binary to filter once more
 
-                else:
-                    # Convert Color Image to Grayscale
-                    gray_image = cv2.cvtColor(self.cv_image, cv2.COLOR_BGR2GRAY)
-                    gray_image[0:270,0:self.width] = 0
-                    gray_image = cv2.GaussianBlur(gray_image, (kernel_size, kernel_size), 0)
-                    self.edges = cv2.Canny(gray_image,40,80) # openCV edge detection function
-
-                # Parameters to combine image: dst = alpha*img1+beta*img2+gamma
-                alpha = 0.6
-                beta = 1
-                gamma = 0
-
-                # overlayPointsOnColoredImage = True makes the path show up on top of the colored image. 
-                # Draw lanes over image (color or black/white)
-                overlayPointsOnColoredImage = rospy.get_param("/overlayPointsOnColoredImage")
-                if overlayPointsOnColoredImage:
-                    self.line_img_color = np.zeros(self.cv_image.shape, dtype=np.uint8)
-                    self.pathOverlayedImage = cv2.addWeighted(self.cv_image,alpha,self.line_img_color,beta,gamma)
-                else: 
-                    self.edges_color = cv2.cvtColor(self.edges, cv2.COLOR_GRAY2RGB)
-                    self.line_img_color = np.zeros(self.edges_color.shape, dtype=np.uint8)
-                    self.pathOverlayedImage = cv2.addWeighted(self.edges_color,alpha,self.line_img_color,beta,gamma)
-
-                # Collect 100 images before running image processing
-                if self.count>100:
-                    self.draw_lines_pub.publish(True)
-                
-                # Publish image with lanes
-                if self.publish_image:
-                    if True:
-                        self.reference_image_pub.publish(self.bridge.cv2_to_imgmsg(cv2.cvtColor(self.edges,cv2.COLOR_GRAY2RGB), "bgr8"))
                     else:
-                        print('Could not publish reference image')
+                        # Convert Color Image to Grayscale
+                        gray_image = cv2.cvtColor(self.cv_image, cv2.COLOR_BGR2GRAY)
+                        # gray_image[0:270,0:self.width] = 0
+                        gray_image = cv2.GaussianBlur(gray_image, (kernel_size, kernel_size), 0)
+                        self.edges = cv2.Canny(gray_image,40,80) # openCV edge detection function
 
-                # Check the true loop rate of incoming images from camera (i.e. frames per second should match parameter specified in launch file)
-                if (self.count > 100 and self.count%3==0):
-                    self.totalTimeCounter +=1
-                    self.timenext = time.time()
-                    self.timeElapsed = self.timenext - self.previousTime
-                    self.totalTime = self.totalTime+self.timeElapsed
-                    self.averageTime = self.totalTime/(self.totalTimeCounter)
-                    self.dt_pub.publish(self.averageTime)
-                    #print('Average Time: ',self.averageTime)
-                self.rate.sleep()
+                    # Parameters to combine image: dst = alpha*img1+beta*img2+gamma
+                    alpha = 0.6
+                    beta = 1
+                    gamma = 0
+
+                    # overlayPointsOnColoredImage = True makes the path show up on top of the colored image. 
+                    # Draw lanes over image (color or black/white)
+                    overlayPointsOnColoredImage = rospy.get_param("/overlayPointsOnColoredImage")
+                    if overlayPointsOnColoredImage:
+                        self.line_img_color = np.zeros(self.cv_image.shape, dtype=np.uint8)
+                        self.pathOverlayedImage = cv2.addWeighted(self.cv_image,alpha,self.line_img_color,beta,gamma)
+                    else: 
+                        self.edges_color = cv2.cvtColor(self.edges, cv2.COLOR_GRAY2RGB)
+                        self.line_img_color = np.zeros(self.edges_color.shape, dtype=np.uint8)
+                        self.pathOverlayedImage = cv2.addWeighted(self.edges_color,alpha,self.line_img_color,beta,gamma)
+
+                    # Collect 100 images before running image processing
+                    if self.count>100:
+                        self.draw_lines_pub.publish(True)
+                    
+                    # Publish image with lanes
+                    if self.publish_image:
+                        if True:
+                            self.reference_image_pub.publish(self.bridge.cv2_to_imgmsg(cv2.cvtColor(self.edges,cv2.COLOR_GRAY2RGB), "bgr8"))
+                        else:
+                            print('Could not publish reference image')
+
+                    # Check the true loop rate of incoming images from camera (i.e. frames per second should match parameter specified in launch file)
+                    if (self.count > 100 and self.count%3==0):
+                        self.totalTimeCounter +=1
+                        self.timenext = time.time()
+                        self.timeElapsed = self.timenext - self.previousTime
+                        self.totalTime = self.totalTime+self.timeElapsed
+                        self.averageTime = self.totalTime/(self.totalTimeCounter)
+                        self.dt_pub.publish(self.averageTime)
+                        #print('Average Time: ',self.averageTime)
+                    self.rate.sleep()
 
             except IOError, (ErrorNumber, ErrorMessage):
                 print('HERE')
@@ -190,12 +199,30 @@ class image_processing_node():
                 print(ErrorMessage)
                 pass
 
+# Call back to receive image
+    def callback_image(self,data):
+        """
+        Callback for incoming image message
+        """
+        # Global Variables
+       #global display_image, publish_image
+        # Convert ROS Image Message to CV2 image
+        global statepoints
+        statepoints = False
+        try:
+            self.cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
+        #time.sleep(1)
+
+        except CvBridgeError as e:
+            print(e)
+
+
     #################################################################################
     def show_Image(self,data):
-        #cv2.imshow("Advanced Lane Detection ed", self.edges[270:480,:])
+        cv2.imshow("Advanced Lane Detection ed", self.edges)#[270:480,:])
         #cv2.imshow("Advanced Lane Detection", self.pathOverlayedImage)
         #cv2.imshow('cv_image',self.cv_image[270:480,:])
-        cv2.imshow("Advanced Lane Detection", self.pathOverlayedImage[270:480,:])
+        cv2.imshow("Advanced Lane Detection", self.pathOverlayedImage)#[270:480,:])
         cv2.waitKey(3) # Waitkey is necesarry to update image
 
     ##############################################################################################
