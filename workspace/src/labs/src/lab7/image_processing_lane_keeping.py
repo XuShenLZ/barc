@@ -32,8 +32,8 @@ class image_processing_node():
 
         # Decalre calibration matrices to rectify the image
 
-        self.mtx = np.array(rospy.get_param("/mtx"))
-        self.dist = np.array(rospy.get_param("/dist"))
+        # self.mtx = np.array(rospy.get_param("/mtx"))
+        # self.dist = np.array(rospy.get_param("/dist"))
 
         # Camera resolution
         self.width = rospy.get_param("/width")
@@ -65,8 +65,8 @@ class image_processing_node():
         self.flipped_camera = rospy.get_param("/flipped_camera")
 
         # Compute the udistortion and rectification transformation map
-        self.newcameramtx, self.roi     = cv2.getOptimalNewCameraMatrix(self.mtx,self.dist,(self.width,self.height),0,(self.width,self.height))
-        self.mapx,self.mapy             = cv2.initUndistortRectifyMap(self.mtx,self.dist,None,self.newcameramtx,(self.width,self.height),5)
+        # self.newcameramtx, self.roi     = cv2.getOptimalNewCameraMatrix(self.mtx,self.dist,(self.width,self.height),0,(self.width,self.height))
+        # self.mapx,self.mapy             = cv2.initUndistortRectifyMap(self.mtx,self.dist,None,self.newcameramtx,(self.width,self.height),5)
 
 
         # Messages to be filled
@@ -139,11 +139,11 @@ class image_processing_node():
                         upper_black = np.flipud(np.array(rospy.get_param("/upper_black")))
 
                         # Threshold the image to only have the red/white track appear
-                        self.reds = cv2.inRange(imageToFilter, lower_blue, upper_blue)
-                        self.whites = cv2.inRange(imageToFilter, lower_black, upper_black) 
+                        self.blue = cv2.inRange(imageToFilter, lower_blue, upper_blue)
+                        self.black = cv2.inRange(imageToFilter, lower_black, upper_black) 
 
 
-                        self.edges = cv2.bitwise_or(self.reds,self.whites) # combines the red filter and white filter images
+                        self.edges = cv2.bitwise_or(self.blue,self.black) # combines the red filter and white filter images
                         self.edges = cv2.bitwise_not(self.edges)
                         self.edges = cv2.GaussianBlur(self.edges,(kernel_size,kernel_size),0) # blurs the image
                         retval, self.edges = cv2.threshold(self.edges,127,255,cv2.THRESH_BINARY) # converts the blurred greyscale to binary to filter once more
@@ -261,7 +261,7 @@ class image_processing_node():
             # finds the lane edges at the x and y value of the pixel
             x_left, x_right,y_left,y_right = self.find_lane_edges(self.edges, index_x, index_y, width)
 
-            if (not(k==1)and (x_right-x_left)<converge_limit):
+            if (not(k==1) and (x_right-x_left)<converge_limit):
                 # Vehicle stops moving when the lane edges converge. Previous left and right lane edge pixel values are held.
                 x_left = leftpts[-1][0]
                 x_right = rightpts[-1][0]
@@ -427,13 +427,17 @@ class image_processing_node():
         y_newPixel_list = inputarray[:,1]
         transformed_y_Inertial_list = np.float32(x_newPixel_list)
         transformed_x_Inertial_list = np.float32(y_newPixel_list)
+
+        pixel_to_inertial_ratio = 5.7 / 330
         
         for i in np.arange(len(x_newPixel_list)):
             x = x_newPixel_list[i]
             y = y_newPixel_list[i]
            
-            transformed_y_Inertial_list[i] = self.calc_x_newPixel_to_y_Inertial(x,y) #number of xpixels from center divided by xpixels per foot
-            transformed_x_Inertial_list[i] = self.calc_y_newPixel_to_x_Inertial(y)
+            # transformed_y_Inertial_list[i] = self.calc_x_newPixel_to_y_Inertial(x,y) #number of xpixels from center divided by xpixels per foot
+            # transformed_x_Inertial_list[i] = self.calc_y_newPixel_to_x_Inertial(y)
+            transformed_y_Inertial_list[i] = x * pixel_to_inertial_ratio
+            transformed_x_Inertial_list[i] = y * pixel_to_inertial_ratio
         return transformed_x_Inertial_list,transformed_y_Inertial_list
 
     def calc_x_newPixel_to_y_Inertial(self,x_newPixel,y_newPixel):

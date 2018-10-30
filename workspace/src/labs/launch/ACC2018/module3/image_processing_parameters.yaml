@@ -8,13 +8,11 @@ saturation:     255
 hue:            130
 flipped_camera: False
 
-mtx:  [[592.156892, 0.000000, 326.689246], [0.000000, 584.923917, 282.822026], [0.000000, 0.000000, 1.000000]]
-dist: [-0.585868, 0.248490, -0.023236, -0.002907, 0.000000]
 
-reference_velocity: 10
+reference_velocity: 2
 numMovingAveragePoints: 5
-furthest_distance: 0.45
-camera_offset_distance: 0.2
+furthest_distance: 1
+camera_offset_distance: 0
 
 loop_rate:                   30
 colorFilter:                 True 
@@ -27,8 +25,8 @@ upper_blue: [100,100,100]
 lower_black: [0,0,0]
 upper_black: [60,60,60]
 
-boxsize: 10
-numStepsToLookAhead: 13
+boxsize: 20
+numStepsToLookAhead: 5
 converge_limit: 100
 
 bMatrix:                    [-152.381,319.5918,-209.0476,41.0882]
