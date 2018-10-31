@@ -20,21 +20,6 @@
 		output="screen">
 	</node>
 
-	<!-- LOW LEVEL CONTROLLER -->
-	<node 
-		pkg="labs" 
-		type="low_level_PID_controller.py" 
-		name="low_level_PID_controller"
-        output = "screen">
-    </node>
-
-	<!-- KEYBOARD CONTROL -->
-    <node
-		pkg = "turtlesim"
-		type = "turtle_teleop_key"
-		name = "teleop_key"
-		required = "true">
-	</node>
 
 
 
