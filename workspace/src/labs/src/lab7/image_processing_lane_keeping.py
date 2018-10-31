@@ -243,18 +243,23 @@ class image_processing_node():
         i=0
         dt = self.averageTime
         y_base = -1
+        pixel_to_inertial_ratio = 5.5 / 330
 
         for k in xrange(1,self.numpoints+1,1):
             # Starting with one time step ahead, finds the pixel corresponding to that distance
             while self.camera_distance_calibrated == False:
                 xIforward = (self.v_ref*dt*k)+self.camera_offset_distance
+                # xIforward = self.v_ref*dt*k
                 y_base = int(self.calc_x_Inertial_to_y_newPixel(xIforward))
+                # y_base = xIforward / pixel_to_inertial_ratio
                 if y_base < 1:
                     self.camera_offset_distance = self.camera_offset_distance+0.005
                 else:
                     self.camera_distance_calibrated = True
             xIforward = (self.v_ref*dt*k)+self.camera_offset_distance
+            # xIforward = self.v_ref*dt*k
             y_base = int(self.calc_x_Inertial_to_y_newPixel(xIforward))
+            # y_base = xIforward / pixel_to_inertial_ratio
             index_y = height - y_base 
             index_x = previous_x
 
@@ -428,7 +433,7 @@ class image_processing_node():
         transformed_y_Inertial_list = np.float32(x_newPixel_list)
         transformed_x_Inertial_list = np.float32(y_newPixel_list)
 
-        pixel_to_inertial_ratio = 5.7 / 330
+        pixel_to_inertial_ratio = 5.5 / 330
         
         for i in np.arange(len(x_newPixel_list)):
             x = x_newPixel_list[i]
@@ -436,7 +441,7 @@ class image_processing_node():
            
             # transformed_y_Inertial_list[i] = self.calc_x_newPixel_to_y_Inertial(x,y) #number of xpixels from center divided by xpixels per foot
             # transformed_x_Inertial_list[i] = self.calc_y_newPixel_to_x_Inertial(y)
-            transformed_y_Inertial_list[i] = x * pixel_to_inertial_ratio
+            transformed_y_Inertial_list[i] = -x * pixel_to_inertial_ratio
             transformed_x_Inertial_list[i] = y * pixel_to_inertial_ratio
         return transformed_x_Inertial_list,transformed_y_Inertial_list
 

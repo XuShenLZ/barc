@@ -9,10 +9,10 @@ hue:            130
 flipped_camera: False
 
 
-reference_velocity: 2
+reference_velocity: 10
 numMovingAveragePoints: 5
-furthest_distance: 1
-camera_offset_distance: 0
+furthest_distance: 0.45
+camera_offset_distance: 0.2
 
 loop_rate:                   30
 colorFilter:                 True 
@@ -25,8 +25,8 @@ upper_blue: [100,100,100]
 lower_black: [0,0,0]
 upper_black: [60,60,60]
 
-boxsize: 20
-numStepsToLookAhead: 5
+boxsize: 1
+numStepsToLookAhead: 9
 converge_limit: 100
 
 bMatrix:                    [-152.381,319.5918,-209.0476,41.0882]
