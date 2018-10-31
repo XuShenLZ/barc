@@ -16,6 +16,10 @@ from math import sqrt, atan, pi, pow, cos, sin, asin, tan, atan2
 from barc.msg import barc_state,ECU, Input, Moving
 from cv_bridge import CvBridge
 
+# V-Rep Simulation Control
+vrepcontrol_pub = rospy.Publisher("vrepSim", Int32, queue_size = 1)
+
+
 # state estimation node
 class image_processing_node():
     def __init__(self):
@@ -94,6 +98,7 @@ class image_processing_node():
         self.show_Image_pub     = rospy.Publisher("show_Image", Bool, queue_size=1)
         self.show_Image_sub     = rospy.Subscriber("show_Image", Bool, self.show_Image,queue_size=1)
 
+
         self.count = 0
         self.totalTimeCounter = 0 
         self.totalTime = 0 
@@ -104,15 +109,19 @@ class image_processing_node():
         self.statepoints=''
         self.camera_distance_calibrated = False
         self.cv_image = False
-        print("Press Up Arrow to start moving. Press Down Arrow to stop moving.")
+
+        
+        print("The Image processing node is running, please check V-Rep and wait for image.")
+
         while not rospy.is_shutdown():
             try:
+                # Start V-Rep Simulation
+                vrepcontrol_pub.publish(1)
                 if isinstance(self.cv_image,bool):
                     pass
                 else:
                     self.count = self.count +1 # updates the count
                     #self.rel,self.dst = self.vid.read() # gets the current frame from the camera
-
                     # Updates the sample time
                     self.dt = time.time() - self.previousTime 
                     self.previousTime = time.time()
@@ -198,6 +207,7 @@ class image_processing_node():
                 print('HERE')
                 print(ErrorMessage)
                 pass
+
 
 # Call back to receive image
     def callback_image(self,data):
@@ -502,6 +512,8 @@ class image_processing_node():
 
 def shutdown_func():
     cv2.destroyAllWindows()
+    # Shut down V-Rep Simulation
+    vrepcontrol_pub.publish(0)
 
 def main(args):
     # Intialize the node
@@ -514,6 +526,7 @@ def main(args):
         rospy.spin()
     except KeyboardInterrupt:
         print("Shutting down")
+        
     cv2.destroyAllWindows()
 
 if __name__ == '__main__':

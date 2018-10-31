@@ -1,11 +1,22 @@
 <launch>
 	<rosparam command ="load" file="$(find labs)/launch/ACC2018/module3/image_processing_parameters.yaml"/>
+	<rosparam command ="load" file="$(find labs)/launch/ACC2018/module3/mpc_parameters.yaml"/>
 
 	<!-- IMAGE PROCESSING -->
 	<node 
 		pkg="labs" 
 		type="image_processing_lane_keeping.py" 
 		name="image_processing_lane_keeping" 
+		output="screen">
+	</node>
+	
+	  
+
+	<!-- HIGH LEVEL CONTROLLER - MPC -->
+	<node 
+		pkg="labs" 
+		type="mpc_reference_tracking.jl" 
+		name="mpc_reference_tracking" 
 		output="screen">
 	</node>
 
